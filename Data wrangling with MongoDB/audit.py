@@ -2,23 +2,32 @@
 """
 Created on Thu Jun 18 19:14:01 2015
 
-@author: juhosalminen1
+@author: Juho Salminen
 """
 
 import re
 import xml.etree.cElementTree as ET
 
+# Regurlar expression to match correct timestamp format
 timestamp_re = re.compile(r'[0-9]{4}-[0-9]{2}-[0-9]{2}[A-Z][0-9]{2}:[0-9]{2}:[0-9]{2}Z')
 
+# Regular expression to match expected street names
+street_re = re.compile(r'.*tie|.*katu|.*kuja|.*aukio|.*polku|.*väylä|.*raitti|.*rinne|.*mutka|.*piha|.*tori|.*kulma|.*kaari')
+
 def audit(filename):
+    # Variables to store audit results
     uids = set()
-    missing_uids = 0
+    missing_uids = 0        
     wrong_ids = 0
     wrong_timestamps = 0
     wrong_coords = 0
     wrong_ways = 0
     tags = set()
     street_abreviations = set()
+    wrong_postcodes = []
+    cities = set()
+    weird_numbers = []
+    weird_streets = []
     
     for _, element in ET.iterparse(filename):
         if element.tag in ['node', 'way', 'relation']:
@@ -45,9 +54,33 @@ def audit(filename):
 
             # Check for abbreviations in street names            
             for elem in element:
-                if elem.tag == 'tag' and re.match('addr:', elem.get('k')):
+                if elem.tag == 'tag' and re.match('addr:street', elem.get('k')):
                     if re.search('\.', elem.get('v')):
                         street_abreviations.add(elem.get('v'))
+            
+            # Check for unexpected street names           
+            for elem in element:
+                if elem.tag == 'tag' and re.match('addr:street', elem.get('k')):
+                    if not re.search(street_re, elem.get('v')):
+                        weird_streets.append(elem.get('v'))
+            
+            # Check postal codes
+            for elem in element: 
+                if elem.tag == 'tag' and re.match('addr:postcode', elem.get('k')):
+                    if not re.match(r'(00|01)[0-9]{3}\Z', elem.get('v')):
+                        wrong_postcodes.append(elem.get('v'))
+            
+            # Check city
+            for elem in element: 
+                if elem.tag == 'tag' and re.match('addr:city', elem.get('k')):
+                    cities.add(elem.get('v'))
+            
+            # Check house number
+            # Check city
+            for elem in element: 
+                if elem.tag == 'tag' and re.match('addr:housenumber', elem.get('k')):
+                    if not re.match(r'[0-9]+', elem.get('v')):
+                        weird_numbers.append(elem.get('v'))
             
         # Check latitude and longitude are floats
         if element.tag == 'node':
@@ -66,7 +99,7 @@ def audit(filename):
             if nd_count < 2:
                 wrong_ways += 1
                     
-            
+    # Print audit results
     print('number of unique uids: ' + str(len(uids)))
     print('missing uids: ' + str(missing_uids))
     print('wrong ids: ' + str(wrong_ids))
@@ -76,10 +109,19 @@ def audit(filename):
     print('number of street abbreviations: ' + str(len(street_abreviations)))
     print(street_abreviations)
     print('number of unique tag names: ' + str(len(tags)))
-    print(tags)
+    print('number of wrong postcodes: ' + str(len(wrong_postcodes)))
+    if len(wrong_postcodes) < 50:    
+        print(wrong_postcodes)
+    else:
+        print(wrong_postcodes[:50])
+    print(cities)
+    print('number of weird housenumbers: ' + str(len(weird_numbers)))
+    print(weird_numbers)
+    print('unexpected street names: ')
+    print(weird_streets)
 
 
-audit('helsinki_finland.osm')
+audit('interpreter.osm')
 
 
 
