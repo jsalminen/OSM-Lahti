@@ -7,8 +7,10 @@ Created on Thu Jun 18 17:57:22 2015
 
 import re
 import xml.etree.cElementTree as ET
+from collections import defaultdict
 import codecs
 import json
+from pymongo import MongoClient
 
 lower = re.compile(r'^([a-z]|_)*$')
 lower_colon = re.compile(r'^([a-z]|_)*:([a-z]|_)*$')
@@ -62,7 +64,17 @@ def shape_element(element):
     else:
         return None
 
+def process_map(file_in):
+    client = MongoClient("mongodb://localhost:27017")
+    db = client.datascience
+    for _, element in ET.iterparse(file_in):
+        el = shape_element(element)
+        if el:
+            db.osm.insert(el)
+    num_files = db.osm.find().count()
+    print('Number of items in db: ' + str(num_files))
 
+'''
 def process_map(file_in, pretty = False):
     # You do not need to change this file
     file_out = "{0}.json".format(file_in)
@@ -75,6 +87,7 @@ def process_map(file_in, pretty = False):
                     fo.write(json.dumps(el, indent=2)+"\n")
                 else:
                     fo.write(json.dumps(el) + "\n")
+'''
 
-process_map('tallinn_estonia.osm')
+process_map('interpreter.osm')
 print('hello')
