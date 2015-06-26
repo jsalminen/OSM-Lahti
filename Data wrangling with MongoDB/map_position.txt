@@ -1,0 +1,6 @@
+Map area: Lahti, Finland
+https://www.openstreetmap.org/relation/345901#map=11/60.9724/25.6888
+Latitude: 60.8590, 61.0855
+Longitude: 25.3146, 26.0630
+
+I chose this area because I live in the city.

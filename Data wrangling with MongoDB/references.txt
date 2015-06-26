@@ -1,0 +1,23 @@
+Google Maps: 
+https://www.google.fi/maps
+
+National Land Survey of Finland: 
+http://www.maanmittauslaitos.fi/en
+
+OpenStreetMap: 
+http://www.openstreetmap.org/
+
+OSM XML:
+https://wiki.openstreetmap.org/wiki/OSM_XML
+
+Posti postal code search service:
+http://www.posti.fi/henkiloasiakkaat/postipalvelee/tyokalut/postinumerohaku/
+
+Stackoverflow for solving various issues with code syntax:
+https://stackoverflow.com/
+
+Stackoverflow: File write operations in Mongo script? 
+https://stackoverflow.com/questions/8971151/file-write-operations-in-mongo-script
+
+The MongoDB Manual:
+http://docs.mongodb.org/manual/
