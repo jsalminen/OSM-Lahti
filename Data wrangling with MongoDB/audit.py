@@ -7,6 +7,7 @@ Created on Thu Jun 18 19:14:01 2015
 
 import re
 import xml.etree.cElementTree as ET
+import operator
 
 # Regurlar expression to match correct timestamp format
 timestamp_re = re.compile(r'[0-9]{4}-[0-9]{2}-[0-9]{2}[A-Z][0-9]{2}:[0-9]{2}:[0-9]{2}Z')
@@ -22,7 +23,7 @@ def audit(filename):
     wrong_timestamps = 0
     wrong_coords = 0
     wrong_ways = 0
-    tags = set()
+    tags = {}
     street_abreviations = set()
     wrong_postcodes = []
     cities = set()
@@ -47,37 +48,38 @@ def audit(filename):
             if not re.match(timestamp_re, element.get('timestamp')):
                 wrong_timestamps += 1
             
-            # Count and list unique tag names
+            # Investigate sub-elements
             for elem in element:
+                
+                # Count and list unique tag names
                 if elem.tag == 'tag':
-                    tags.add(elem.get('k'))
-
-            # Check for abbreviations in street names            
-            for elem in element:
+                    if elem.get('k') in tags:
+                        tags[elem.get('k')] += 1
+                    else:
+                        tags[elem.get('k')] = 1
+                    
+                
+                # Check for abbreviations in street names   
                 if elem.tag == 'tag' and re.match('addr:street', elem.get('k')):
                     if re.search('\.', elem.get('v')):
                         street_abreviations.add(elem.get('v'))
-            
-            # Check for unexpected street names           
-            for elem in element:
-                if elem.tag == 'tag' and re.match('addr:street', elem.get('k')):
+                     
+                # Check for unexpected street names           
+                if elem.tag == 'tag' and re.match('addr:street\Z', elem.get('k')):
                     if not re.search(street_re, elem.get('v')):
                         weird_streets.append(elem.get('v'))
             
-            # Check postal codes
-            for elem in element: 
+                # Check post codes: 5 numbers, start with 15 in this area
                 if elem.tag == 'tag' and re.match('addr:postcode', elem.get('k')):
-                    if not re.match(r'(00|01)[0-9]{3}\Z', elem.get('v')):
+                    if not re.match(r'(15|16|17)[0-9]{3}\Z', elem.get('v')):
                         wrong_postcodes.append(elem.get('v'))
+                        
             
-            # Check city
-            for elem in element: 
+                # Check city
                 if elem.tag == 'tag' and re.match('addr:city', elem.get('k')):
                     cities.add(elem.get('v'))
             
-            # Check house number
-            # Check city
-            for elem in element: 
+                # Check house number
                 if elem.tag == 'tag' and re.match('addr:housenumber', elem.get('k')):
                     if not re.match(r'[0-9]+', elem.get('v')):
                         weird_numbers.append(elem.get('v'))
@@ -100,7 +102,6 @@ def audit(filename):
                 wrong_ways += 1
                     
     # Print audit results
-    print('number of unique uids: ' + str(len(uids)))
     print('missing uids: ' + str(missing_uids))
     print('wrong ids: ' + str(wrong_ids))
     print('wrong timestamps: ' + str(wrong_timestamps))
@@ -109,11 +110,14 @@ def audit(filename):
     print('number of street abbreviations: ' + str(len(street_abreviations)))
     print(street_abreviations)
     print('number of unique tag names: ' + str(len(tags)))
+    sorted_tags = sorted(tags.items(), key = operator.itemgetter(1), reverse = True)
+    print(sorted_tags[:30])
     print('number of wrong postcodes: ' + str(len(wrong_postcodes)))
     if len(wrong_postcodes) < 50:    
         print(wrong_postcodes)
     else:
         print(wrong_postcodes[:50])
+    print('Cities:')
     print(cities)
     print('number of weird housenumbers: ' + str(len(weird_numbers)))
     print(weird_numbers)
@@ -121,7 +125,7 @@ def audit(filename):
     print(weird_streets)
 
 
-audit('interpreter.osm')
+audit('lahti_finland.osm')
 
 
 
